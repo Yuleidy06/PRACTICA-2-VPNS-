@@ -1,0 +1,93 @@
+PC1 y WEB:
+ip a
+ip route
+ping -c 3 192.168.42.1
+sudo apt update
+
+PC1
+sudo apt install -y traceroute curl
+
+(usuario, VLAN 10, DHCP)
+sudo dhclient -r ens3
+sudo dhclient ens3
+ip a show ens3
+ping -c 3 10.9.49.1
+
+WEB
+sudo apt install -y traceroute curl nginx
+curl http://localhost
+
+IP fija
+ls /etc/netplan
+echo "network: {config: disabled}" | sudo tee /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg
+sudo nano /etc/netplan/50-cloud-init.yaml
+ sudo cat /etc/netplan/50-cloud-init.yaml
+sudo netplan apply
+ip a show ens3
+ping -c 3 10.9.49.129
+
+Servidor HTTPS
+sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/ssl/private/web.key -out /etc/ssl/certs/web.crt -subj "/CN=10.9.49.130"
+echo "<h1>Servidor Web HTTPS - MATRICULA 2022-0949</h1>" | sudo tee /var/www/html/index.html
+sudo rm /etc/nginx/sites-enabled/default
+sudo nano /etc/nginx/sites-enabled/web.conf
+
+sudo nginx -t
+sudo systemctl restart nginx
+ls -l /var/www/html
+curl -k https://localhost
+
+Con la VPN activa
+ping -c 4 10.9.49.130
+traceroute 10.9.49.130
+curl -k https://10.9.49.130
+
+Con la VPN desactivada
+ping -c 4 10.9.49.130
+traceroute -m 5 10.9.49.130
+curl -k --max-time 5 https://10.9.49.130
+
+FORTIGATE CONSOLA
+FTA
+config system interface
+edit port3
+set mode static
+set ip 192.168.159.101 255.255.255.0
+set allowaccess ping https http
+next
+end
+
+FTB
+get system interface physical port3
+show system interface port3
+get system status
+execute ping 192.168.159.1
+get system arp
+diagnose sniffer packet port3 'tcp port 443' 4
+
+CMD WINDOWS 
+ipconfig
+ping 192.168.159.101
+ping 192.168.159.102
+
+ISP
+enable
+configure terminal
+hostname ISP
+ip routing
+interface GigabitEthernet0/0
+ no switchport
+ ip address 200.9.49.1 255.255.255.252
+ no shutdown
+ exit
+interface GigabitEthernet0/1
+ no switchport
+ ip address 200.9.49.5 255.255.255.252
+ no shutdown
+ exit
+end
+write memory
+
+show ip interface brief
+ping 200.9.49.2
+ping 200.9.49.6
